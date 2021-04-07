@@ -21,21 +21,17 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-# run the gapic generator
-gapic = gcp.GAPICBazel()
-versions = ["v1"]
+default_version = "v1"
 name = 'appengine'
-for version in versions:
-  library = gapic.node_library(
-  name, 
-  version,
-  bazel_target=f"//google/appengine/{version}:appengine-{version}-nodejs")
+for library in s.get_staging_dirs(default_version):
   s.copy(library, excludes=["package.json"])
+s.remove_staging_dirs()
+versions = node.collect_versions_from_src(default_version)
 
 # Copy common templates
 common_templates = gcp.CommonTemplates()
 templates = common_templates.node_library(
-    source_location='build/src', versions=["v1"], default_version="v1")
+    source_location='build/src', versions=versions, default_version=default_version)
 s.copy(templates, excludes=[])
 
-node.postprocess_gapic_library()
+node.postprocess_gapic_library_hermetic()
